@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://h8820b6opkga"]
+[gd_scene load_steps=10 format=3 uid="uid://h8820b6opkga"]
 
 [ext_resource type="Script" path="res://Scripts/simulation_world.gd" id="1_o2ndw"]
 [ext_resource type="TileSet" uid="uid://jtolne00dcgy" path="res://resource/sprout_grass.tres" id="1_w0dqc"]
@@ -6,15 +6,21 @@
 [ext_resource type="PackedScene" uid="uid://8mljofu0xprm" path="res://Scenes/creature.tscn" id="3_quo0x"]
 [ext_resource type="PackedScene" uid="uid://bkewqyfqpcxfp" path="res://Scenes/food_spawner.tscn" id="5_1icib"]
 [ext_resource type="Script" path="res://Scripts/SimulationCamera.gd" id="5_imnic"]
+[ext_resource type="Script" path="res://Scripts/AI/SimpleNeuralNetwork.gd" id="7_wumr2"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_5n64h"]
 size = Vector2(1010, 500)
+
+[sub_resource type="Resource" id="Resource_x30md"]
+script = ExtResource("7_wumr2")
+network_shape = Array[int]([2, 4, 4, 2])
 
 [node name="SimulationWorld" type="Node2D"]
 texture_filter = 1
 script = ExtResource("1_o2ndw")
 food_scene = ExtResource("2_obn8b")
 creature_scene = ExtResource("3_quo0x")
+creature_count = 0
 
 [node name="TileMap" type="TileMap" parent="."]
 texture_filter = 1
@@ -54,5 +60,7 @@ script = ExtResource("5_imnic")
 
 [node name="Creature" parent="Creatures" instance=ExtResource("3_quo0x")]
 position = Vector2(319, 222)
+neural_network = SubResource("Resource_x30md")
+creature_scene = ExtResource("3_quo0x")
 
 [node name="Food" type="Node" parent="."]

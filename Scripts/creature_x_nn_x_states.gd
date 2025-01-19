@@ -4,8 +4,11 @@ extends CharacterBody2D
 @export var energy: float = 100.0
 @export var hunger_threshold: float = 20.0
 @export var detection_radius: float = 100.0
+@export var reproduction_cost: float = 30.0  # Energy cost of reproducing
+@export var reproduction_threshold: float = 80.0  # Energy level to trigger reproduction
 
-var neural_network = preload("res://Scripts/AI/SimpleNeuralNetwork.gd").new()
+@export var neural_network := SimpleNeuralnetwork.new() #= preload("res://Scripts/AI/SimpleNeuralNetwork.gd").new()
+@export var creature_scene : PackedScene   # Scene for a new creature
 var target_food: Node2D = null
 
 enum CreatureState { IDLE, ROAMING, TARGETING_FOOD, DEAD}
@@ -15,6 +18,9 @@ var roaming_direction: Vector2 = Vector2.ZERO
 var state_timer: float = 0.0
 
 var info_text = ""
+
+func _init():
+	neural_network = SimpleNeuralnetwork.new()
 
 func _ready():
 	neural_network.input_size = 3
@@ -53,9 +59,12 @@ func _physics_process(delta):
 
 func idle_behavior(delta):
 	#energy = min(energy + delta * 5, 100)  # Regain energy
-	energy = min(energy + delta * 1, 100)  # Regain energy
+	energy = min(energy + delta * 1, 100)  # Regain less energy
 	state_timer -= delta
-	if state_timer <= 0:
+	if energy >= reproduction_threshold:
+		reproduce()
+		state_timer = 1.0  # Short delay after reproduction
+	elif state_timer <= 0:
 		change_state(CreatureState.ROAMING)
 
 func roaming_behavior(delta):
@@ -68,15 +77,36 @@ func roaming_behavior(delta):
 
 	energy -= delta * 2  # Roaming consumes energy
 	energy = clamp(energy, 0, 100)
-
-	state_timer -= delta
+	if energy >= reproduction_threshold:
+		reproduce()
+		state_timer = 1.0  # Short delay after reproduction
 	if state_timer <= 0 and energy <= hunger_threshold:
 		change_state(CreatureState.IDLE)
-		
+	state_timer -= delta
+	
 func death_behavior(delta):
 	velocity = Vector2.ZERO  # Stop all movement
 	# Optional: Play death animation or visual effect here
 	queue_free()  # Remove the creature after "dying"
+	
+func reproduce():
+	if energy < reproduction_cost:
+		return  # Prevent reproduction if not enough energy
+
+	energy -= reproduction_cost
+	energy = max(energy, 0)
+
+	var new_creature = creature_scene.instantiate()
+	new_creature.position = position + Vector2(randf_range(-20, 20), randf_range(-20, 20))  # Spawn nearby
+
+	# Check if the parent has a valid neural network before copying
+	if neural_network:
+		new_creature.neural_network = SimpleNeuralnetwork.new()
+		new_creature.neural_network.copy_from(neural_network)  # Inherit neural network weights
+		new_creature.neural_network.mutate_weights(0.1)  # Add slight mutation
+
+	get_parent().add_child(new_creature)  # Add to the scene
+	print("Creature reproduced!")
 
 func change_state(new_state: CreatureState):
 	state = new_state
