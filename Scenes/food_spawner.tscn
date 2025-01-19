@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://bkewqyfqpcxfp"]
+
+[ext_resource type="Script" path="res://Scripts/FoodSpawner.gd" id="1_y4fj4"]
+
+[node name="FoodSpawner" type="Marker2D"]
+script = ExtResource("1_y4fj4")
+max_food_count = 500
+spawn_interval = 1.0
